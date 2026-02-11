@@ -9,7 +9,7 @@ from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import
     PipelineImageInput
 )
 
-from renoise.renoise_inversion import inversion_step
+from src.renoise.renoise_inversion import inversion_step
 
 
 class SDXLDDIMPipeline(StableDiffusionXLImg2ImgPipeline):

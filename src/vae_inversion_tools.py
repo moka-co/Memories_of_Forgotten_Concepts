@@ -5,7 +5,7 @@ import numpy as np
 import os.path as osp
 import torch
 import os
-from utils import preprocess_image
+from src.utils import preprocess_image
 from PIL import Image
 
 

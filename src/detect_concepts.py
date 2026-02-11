@@ -1,5 +1,5 @@
 import os
-from utils import (
+from src.utils import (
     detectNudeClasses,
     if_nude,
     imagenet_ResNet50,

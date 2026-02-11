@@ -1,32 +1,20 @@
 <h1 style="text-align: center;">
-Memories of Forgotten Concepts <br> CVPR 2025 (Highlight)
+Memories of Forgotten Concepts <br> CVPR 2025
 </h1>
 
-<a href="https://matanr.github.io/Memories_of_Forgotten_Concepts/"><img src="https://img.shields.io/static/v1?label=Project&message=Website&color=blue"></a>
-<a href="https://arxiv.org/abs/2412.00782"><img src="https://img.shields.io/badge/arXiv-2311.17891-b31b1b.svg"></a>
+This is a fork, please see the original project [Memories of Forgotten Concepts](https://matanr.github.io/Memories_of_Forgotten_Concepts/) made by  [Matan Rusanovsky<sup>*</sup>](https://scholar.google.com/citations?user=5TS4vucAAAAJ&hl=en&oi=ao), [Shimon Malnick<sup>*</sup>](https://www.malnick.net), [Amir Jevnisek<sup>*</sup>](https://scholar.google.com/citations?hl=en&user=czm6bkUAAAAJ), [Ohad Fried](https://www.ohadf.com/), [Shai Avidan](http://www.eng.tau.ac.il/~avidan/)
 
-
-
-
-
-<img src="images/teaser.png">
-
-
-> [Memories of Forgotten Concepts](https://matanr.github.io/Memories_of_Forgotten_Concepts/)
->
->
-> [Matan Rusanovsky<sup>*</sup>](https://scholar.google.com/citations?user=5TS4vucAAAAJ&hl=en&oi=ao), [Shimon Malnick<sup>*</sup>](https://www.malnick.net), [Amir Jevnisek<sup>*</sup>](https://scholar.google.com/citations?hl=en&user=czm6bkUAAAAJ), [Ohad Fried](https://www.ohadf.com/), [Shai Avidan](http://www.eng.tau.ac.il/~avidan/)
->
->
-> <sup>*</sup>Equal Contribution
->
 > ❓ Many studies aim to erase concepts from diffusion models. While these models may no longer generate images tied to the erased concept when prompted, we ask: **Is the concept truly erased? Could the model still reproduce it through other means?**
 >
 > ↪️Instead of analyzing a model that erased some concept by generating many images and analyzing them, we propose a method that analyzes it using latents that generate the erased concept.
 
-<br>
+All rights are of the original authors.
 
-</div>
+The purpose of this fork is to reproduce the experiments and make some minor adjustments (without changing the code) to make it easier for others to reproduce this project.
+
+Expect changes in this README.
+
+---
 
 # Getting Started
 ## Requirements:
@@ -92,29 +80,31 @@ Instead, for AdvUnlearn, include:
 💡 Only one of these two options (--ablated_model or --ablated_text_encoder) should be used at a time, according to the model that is being analyzed.
 
 ### Concept-Level
+**Note:** run from the root of the repository.
+
 Perform a concept-level analysis:
 
 ```shell
-python memory_of_an_ablated_concept.py
---reference_dataset_root <path to mscoco17>
---out_dir <out directory>
---ablated_concept_name <nudity/vangogh/church/garbage_truck/tench/parachute>
---dataset_root <path to the dataset of images of ablated_concept_name>
---diffusion_inversion_method <renoise/nti>
---num_diffusion_inversion_steps 50
+python -m src.memory_of_an_ablated_concept \
+--reference_dataset_root <path to mscoco17> \
+--out_dir <out directory> \
+--ablated_concept_name <nudity/vangogh/church/garbage_truck/tench/parachute> \
+--dataset_root <path to the dataset of images of ablated_concept_name> \
+--diffusion_inversion_method <renoise/nti> \
+--num_diffusion_inversion_steps 50 \
 [--ablated_model <path to the ablated model> | --ablated_text_encoder OPTML-Group/AdvUnlearn]
 ```
 
 ### Image-Level
 Perform an image-level analysis:
 ```shell
-python many_memories_of_an_ablated_image.py 
---reference_dataset_root <path to mscoco17>
---out_dir <out directory>
---ablated_concept_name <nudity/vangogh/church/garbage_truck/tench/parachute>
---dataset_root <path to the dataset of images of ablated_concept_name>
---num_vae_inversion_steps 3000
---diffusion_inversion_method <renoise/nti>
+python -m src.many_memories_of_an_ablated_image \
+--reference_dataset_root <path to mscoco17> \
+--out_dir <out directory> \
+--ablated_concept_name <nudity/vangogh/church/garbage_truck/tench/parachute> \
+--dataset_root <path to the dataset of images of ablated_concept_name> \
+--num_vae_inversion_steps 3000 \
+--diffusion_inversion_method <renoise/nti> \
 --num_diffusion_inversion_steps 50
 [--ablated_model <path to the ablated model> | --ablated_text_encoder OPTML-Group/AdvUnlearn]
 ```
@@ -133,3 +123,8 @@ python many_memories_of_an_ablated_image.py
 
 # Acknowledgments
 This repository is built upon and incorporates code from [Diffusion-MU-Attack](https://github.com/OPTML-Group/Diffusion-MU-Attack), [AdvUnlearn](https://github.com/OPTML-Group/AdvUnlearn) and [Renoise](https://github.com/garibida/ReNoise-Inversion).
+
+
+# Changelogs
+This section highlights changes made in this fork w.r.t the original fork
+- Changed instructions, treating python scripts as modules, running them with `python -m directory.module_name`, i find this make it easier to run in a Google Colab environment with `condalab`.

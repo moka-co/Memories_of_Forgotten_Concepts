@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from renoise.eunms import Model_Type, Scheduler_Type
+from src.renoise.eunms import Model_Type, Scheduler_Type
 
 @dataclass
 class RunConfig:

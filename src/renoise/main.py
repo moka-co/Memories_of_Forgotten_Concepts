@@ -3,8 +3,8 @@ import torch
 from PIL import Image
 import os.path as osp
 from diffusers.utils.torch_utils import randn_tensor
-from renoise.config import RunConfig
-from renoise.utils.enums_utils import model_type_to_size, is_stochastic
+from src.renoise.config import RunConfig
+from src.renoise.utils.enums_utils import model_type_to_size, is_stochastic
 
 def create_noise_list(model_type, length, generator=None):
     img_size = model_type_to_size(model_type)

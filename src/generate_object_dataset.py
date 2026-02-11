@@ -9,7 +9,7 @@ import argparse
 import os
 import random
 import json
-from utils import imagenet_ResNet50, object_eval
+from src.utils import imagenet_ResNet50, object_eval
 
 def object_prompts(object):
     image_prompts = {
@@ -703,7 +703,14 @@ def generate_object_images(k, object_id, device='cuda:0', guidance_scale = 7.5, 
             
                 
             img_sd = Image.open(img_sd_dir)
-            if object_eval(classifier,img_sd, processor,device) == label_list[object_id]:
+
+            # Perform classification
+            class_inputs = processor(images=img_sd, return_tensors="pt").to(device)
+            with torch.no_grad():
+              outputs = classifier(**class_inputs)
+              logits = outputs.logits
+            top_2_preds = torch.topk(logits, 2).indices[0]
+            if label_list[object_id] in top_2_preds:
                 img_sd.save(f"{folder_path}/imgs/{i}_0.png")
                 all_rows.append({'case_number':i,'prompt':prompt[0],'sd_seed':seed, 'sd_guidance_scale':7.5})
                 temp_count += 1

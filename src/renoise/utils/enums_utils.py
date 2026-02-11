@@ -2,12 +2,12 @@
 import torch
 from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline
 
-from renoise.eunms import Model_Type, Scheduler_Type
-from renoise.schedulers.euler_scheduler import MyEulerAncestralDiscreteScheduler
-from renoise.schedulers.lcm_scheduler import MyLCMScheduler
-from renoise.schedulers.ddim_scheduler import MyDDIMScheduler
-from renoise.pipes.sdxl_inversion_pipeline import SDXLDDIMPipeline
-from renoise.pipes.sd_inversion_pipeline import SDDDIMPipeline
+from src.renoise.eunms import Model_Type, Scheduler_Type
+from src.renoise.schedulers.euler_scheduler import MyEulerAncestralDiscreteScheduler
+from src.renoise.schedulers.lcm_scheduler import MyLCMScheduler
+from src.renoise.schedulers.ddim_scheduler import MyDDIMScheduler
+from src.renoise.pipes.sdxl_inversion_pipeline import SDXLDDIMPipeline
+from src.renoise.pipes.sd_inversion_pipeline import SDDDIMPipeline
     
 def scheduler_type_to_class(scheduler_type):
     if scheduler_type == Scheduler_Type.DDIM:
