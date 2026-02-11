@@ -26,6 +26,6 @@ dependencies:
     - invisible_watermark==0.2.0
     - huggingface-hub==0.24.0
     - pyrallis==0.3.1
-    - datasets==4.4.1
+    - datasets
   
 
