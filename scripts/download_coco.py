@@ -10,6 +10,8 @@ url_data = "http://images.cocodataset.org/zips/val2017.zip"
 # DOWNLOAD ANNOTATIONS
 
 target_dir = "./data"
+os.makedirs(target_dir, exist_ok=True) # Make sure the directory exists
+
 zip_path = os.path.join(target_dir, "stuff_annotations_trainval2017.zip")
 
 response = requests.get(url_ann, stream=True)
