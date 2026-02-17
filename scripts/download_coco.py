@@ -4,7 +4,7 @@ import os
 import zipfile
 
 # Download URLs
-url_ann = "http://images.cocodataset.org/annotations/stuff_annotations_trainval2017.zip"
+url_ann = "http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
 url_data = "http://images.cocodataset.org/zips/val2017.zip"
 
 # DOWNLOAD ANNOTATIONS
