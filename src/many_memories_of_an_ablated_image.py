@@ -959,11 +959,15 @@ if __name__ == "__main__":
     all_control_group_psnrs = []
     all_control_group_vae_psnrs = []
 
+    # Loop over target image indices
     for tid, target_index in enumerate(args.image_indices):
+
+        # Load Stable Diffusion Pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
             model_id, safety_checker=None, scheduler=scheduler
         )
 
+        # Load ablated model provided in input and text encoder
         if args.ablated_model:
             pipe.unet.load_state_dict(torch.load(args.ablated_model))
 
@@ -1006,6 +1010,8 @@ if __name__ == "__main__":
         os.makedirs(test_out_dir, exist_ok=True)
         plots_dir = osp.join(test_out_dir, "plots")
         os.makedirs(plots_dir, exist_ok=True)
+
+        # If analyze only is set to False:
         if not args.analyze_only:
             start_from_latents_from_other_imgs_vae_inversion(
                 pipe, args, imgs_list, test_out_dir
@@ -1028,6 +1034,8 @@ if __name__ == "__main__":
                 num_diffusion_inversion_steps=args.num_diffusion_inversion_steps,
                 inversion_method=args.diffusion_inversion_method,
             )
+        
+        # Analyze
         results_target = analyze_z_T(
             args,
             ref_img_indices,
