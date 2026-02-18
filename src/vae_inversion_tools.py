@@ -93,7 +93,8 @@ def vae_inversion_start_from_encoder_latent(
         f"{out_dir}/decode_the_mean_of_encoder_out.png"
     )
 
-    z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
+    with torch.no_grad(): #Optimize VRAM usage
+        z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
     target_mean = z_0_from_encoder.mean.detach()
     target_var = z_0_from_encoder.var.detach()
     target_image_scaled_to_01 = torch.from_numpy(np.array(image) * 1.0 / 255.0).to(
@@ -114,7 +115,8 @@ def vae_inversion_start_from_encoder_latent(
         optimizer.zero_grad()
 
         # Decode the latent variable to get the reconstructed image
-        reconstructed_image = decoder(z).sample
+        with torch.no_grad():
+            reconstructed_image = decoder(z).sample
         reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
             torch.float32
         )
