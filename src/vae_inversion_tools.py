@@ -115,8 +115,8 @@ def vae_inversion_start_from_encoder_latent(
         optimizer.zero_grad()
 
         # Decode the latent variable to get the reconstructed image
-        with torch.no_grad():
-            reconstructed_image = decoder(z).sample
+        
+        reconstructed_image = decoder(z).sample
         reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
             torch.float32
         )
