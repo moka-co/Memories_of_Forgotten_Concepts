@@ -232,7 +232,8 @@ def vae_inversion_start_from_arbitrary_latent(
     )
     os.makedirs(out_dir, exist_ok=True)
     # validate that the preprocessing went well:
-    result = decoder(encoder(pp_image.to(device)).latent_dist.mean).sample
+    with torch.no_grad():
+        result = decoder(encoder(pp_image.to(device)).latent_dist.mean).sample
     result_rescaled = (result / 2 + 0.5).clamp(0, 1)
     image_to_show = result_rescaled.detach().cpu().permute(0, 2, 3, 1).float().numpy()
     Image.fromarray((image_to_show[0] * 255).astype(np.uint8)).save(
@@ -257,10 +258,11 @@ def vae_inversion_start_from_arbitrary_latent(
     for step in pbar:
         optimizer.zero_grad()
         # Decode the latent variable to get the reconstructed image
-        reconstructed_image = decoder(z).sample
-        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
-            torch.float32
-        )
+        with torch.no_grad():
+            reconstructed_image = decoder(z).sample
+            reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
+                torch.float32
+            )
 
         # Compute the loss between the original image and the reconstructed image
         reconstruction_loss_value = reconstruction_loss(
