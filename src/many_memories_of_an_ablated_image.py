@@ -22,8 +22,8 @@ from src.analyze_latents import (
     analyze_goal_reference_normal_nll_values,
 )
 from src.utils import tensor_to_nll, calculate_psnr
-from detect_concepts import detect_concept_post_analysis
-from analysis_utils import clip_similarity
+from src.detect_concepts import detect_concept_post_analysis
+from src.analysis_utils import clip_similarity
 import numpy as np
 from src.renoise.main import run as renoise_invert
 from src.renoise.eunms import Model_Type, Scheduler_Type
