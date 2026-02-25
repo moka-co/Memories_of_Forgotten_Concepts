@@ -18,10 +18,11 @@ def download_and_extract(url, output_dir, filename, label=""):
 
   output_file = os.path.join(output_dir, filename)
 
-  # Doesn't work in Colab:
-  #gdown.download_folder(ablated_models_object_url, output=output1)
-  # But the following works:
-  response = subprocess.run(["gdown", "--fuzzy","-O", output_file, url], check=True, capture_output=True)
+  if not os.path.exists(output_file):
+    # Doesn't work in Colab:
+    gdown.download_folder(url, output=output_dir)
+    # But the following works:
+    #response = subprocess.run(["gdown", "--fuzzy","-O", output_file, url], check=True, capture_output=True)
 
   with zipfile.ZipFile(output_file, 'r') as zip_ref:
       zip_ref.extractall(path=output_dir)
@@ -35,9 +36,9 @@ def download_and_extract(url, output_dir, filename, label=""):
 # Download ablated models
 target_dir = "./data/ablated"
 os.makedirs(target_dir, exist_ok=True)
-download_and_extract(ablated_models_object_url, target_dir, "ablated1.zip", "Ablated Models 1/2")
+download_and_extract(ablated_models_object_url2, target_dir, "unlearned_ckpt_object.zip", "Ablated Models 1/2")
 time.sleep(5)
-download_and_extract(ablated_models_others_url, target_dir, "ablated2.zip", "Ablated Models 2/2")
+download_and_extract(ablated_models_others_url, target_dir, "esd_fmn_models.zip", "Ablated Models 2/2")
 
 # Download Style Classifier for Van Gogh
 target_dir="./data/"

@@ -21,7 +21,7 @@ dependencies:
     - diffusers==0.24.0
     - easydict==1.13
     - transformers==4.46.3
-    - triton==2.3.0
+    - triton
     - opencv-python==4.10.0.84
     - invisible_watermark==0.2.0
     - huggingface-hub==0.24.0
