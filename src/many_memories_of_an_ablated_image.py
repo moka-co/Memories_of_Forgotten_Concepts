@@ -240,7 +240,7 @@ def sample_latents_around_target(pipe, args, imgs_list, test_out_dir):
     torch.save(target_latent, os.path.join(test_out_dir, "z_0_target.pth"))
 
     for img_index in range(len(imgs_list[:-1])):
-        starting_latent = torch.randn(target_latent.shape).cuda()
+        starting_latent = torch.randn(target_latent.shape, requires_grad=True, device="cuda")
         target_latent_start_from_latent = vae_inversion_start_from_arbitrary_latent(
             encoder=pipe.vae.encode,
             decoder=pipe.vae.decode,
