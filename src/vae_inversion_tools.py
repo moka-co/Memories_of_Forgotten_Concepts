@@ -272,7 +272,7 @@ def vae_inversion_start_from_arbitrary_latent(
         loss = scale_reconstruction * reconstruction_loss_value
 
         # Backpropagation
-        loss.backward()
+        #loss.backward()
         losses.append(loss.item())
         psnr = (
             10
