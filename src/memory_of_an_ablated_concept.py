@@ -123,6 +123,13 @@ def validate_and_get_args():
         help="Analyze only, do not find latents",
     )
 
+    parser.add_argument(
+        "--max_images",
+        type=int,
+        default=None,
+        help="Cap on both target images and reference images (for quick smoke-tests)",
+    )
+
     args = parser.parse_args()
     args = EasyDict(vars(args))
 
@@ -588,6 +595,9 @@ if __name__ == "__main__":
         args.image_indices = list(range(len(target_ds)))
     if args.num_ref_images is None:
         args.num_ref_images = len(target_ds)
+    if args.max_images is not None:
+        args.image_indices = args.image_indices[: args.max_images]
+        args.num_ref_images = min(args.num_ref_images, args.max_images)
     
     with open(osp.join(args.out_dir, "args.json"), "w") as f:
         yaml.dump(vars(args), f, default_flow_style=False)
@@ -640,9 +650,11 @@ if __name__ == "__main__":
     test_out_dir = os.path.join(
         out_dir, f"hard_to_forget_diffusion_{args.num_diffusion_inversion_steps}"
     )
+
     os.makedirs(test_out_dir, exist_ok=True)
     plots_dir = osp.join(test_out_dir, "plots")
     os.makedirs(plots_dir, exist_ok=True)
+
     if not args.analyze_only:
         diffusion_inversion(
             pipe,

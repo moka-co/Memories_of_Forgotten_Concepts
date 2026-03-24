@@ -27,10 +27,6 @@ def download_and_extract(url, output_dir, filename, label=""):
   with zipfile.ZipFile(output_file, 'r') as zip_ref:
       zip_ref.extractall(path=output_dir)
   
-  # Delete Zip
-  if os.path.exists(output_file):
-    os.remove(output_file)
-  
   print(f"Successfully download and extracted {label} under {output_dir}")
 
 # Download ablated models
