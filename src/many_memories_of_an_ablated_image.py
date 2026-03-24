@@ -134,6 +134,10 @@ def validate_and_get_args():
         "--num_ref_images", type=int, default=10, help="Number of reference images"
     )
     parser.add_argument(
+        "--max_images", type=int, default=None,
+        help="Cap on both target images and reference images (for quick smoke-tests)",
+    )
+    parser.add_argument(
         "--show_figures", default=False, action="store_true", help="Show figures"
     )
     parser.add_argument(
@@ -145,6 +149,10 @@ def validate_and_get_args():
 
     args = parser.parse_args()
     args = EasyDict(vars(args))
+
+    if args.max_images is not None:
+        args.image_indices = args.image_indices[: args.max_images]
+        args.num_ref_images = min(args.num_ref_images, args.max_images)
 
     return args
 
