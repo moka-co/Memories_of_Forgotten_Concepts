@@ -22,7 +22,16 @@ def get_latent_from_encoder(encoder, img, device=None):
     image = img if img.size == (512, 512) else img.resize((512, 512))
 
     pp_image = preprocess_image(image)
-    z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
+    # move image to target device
+    pp_image = pp_image.to(device)
+
+    #match the image data type to the encoder's weight data type
+    if hasattr(encoder, "dtype"):
+        pp_image = pp_image.to(dtype=encoder.dtype)
+    elif hasattr(encoder, "module") and hasattr(encoder.module, "dtype"):
+        pp_image = pp_image.to(dtype=encoder.module.dtype)
+    
+    z_0_from_encoder = encoder(pp_image).latent_dist
     return z_0_from_encoder.mean.detach().clone()
 
 
