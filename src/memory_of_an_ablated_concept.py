@@ -446,6 +446,8 @@ def analyze_z_T(
     original_images_dir,
     control_group=False,
     target_prompts=None,
+    clip_model=None,
+    clip_processor=None,
 ):
     """
     Analyzes the latent representations and reconstructed images for a set of ref or target images.
@@ -504,7 +506,7 @@ def analyze_z_T(
             )
             if target_prompts:
                 clip_similarities.append(
-                    clip_similarity(reconstructed_image_path, target_prompts[image_idx])
+                    clip_similarity(reconstructed_image_path, target_prompts[image_idx],model=clip_model, processor=clip_processor)
                 )
         else:
             original_image_path = osp.join(
@@ -632,6 +634,10 @@ if __name__ == "__main__":
     if hasattr(pipe, "enable_vae_slicing"):
         pipe.enable_vae_slicing()
 
+    # Pre-cache CLIP
+    from transformers import CLIPModel, CLIPProcessor
+    clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
+    clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
     ref_img_indices = []
     ref_imgs_list = []
@@ -693,6 +699,8 @@ if __name__ == "__main__":
         plots_dir,
         osp.join(out_dir, "original"),
         target_prompts=target_prompts,
+        clip_model=clip_model,
+        clip_processor=clip_processor
     )
     results_control_group = analyze_z_T(
         args,
