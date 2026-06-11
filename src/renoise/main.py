@@ -59,32 +59,13 @@ def run(init_image: Image,
     }
 
     if latents is None:
-        
-        res = pipe_inversion(prompt = prompt,
-                        num_inversion_steps = cfg.num_inversion_steps,
-                        num_inference_steps = cfg.num_inference_steps,
-                        generator = generator,
-                        image = init_image,
-                        guidance_scale = cfg.guidance_scale,
-                        strength = cfg.inversion_max_step,
-                        denoising_start = 1.0-cfg.inversion_max_step,
-                        num_renoise_steps = cfg.num_renoise_steps)
-        latents = res[0][0]
-        all_latents = res[1]
+        res = pipe_inversion(**inversion_kwargs)
     else:
-        res = pipe_inversion(prompt = prompt,
-                        num_inversion_steps = cfg.num_inversion_steps,
-                        num_inference_steps = cfg.num_inference_steps,
-                        generator = generator,
-                        image = init_image,
-                        guidance_scale = cfg.guidance_scale,
-                        strength = cfg.inversion_max_step,
-                        denoising_start = 1.0-cfg.inversion_max_step,
-                        num_renoise_steps = cfg.num_renoise_steps,
-                             latents = latents.clone())
-        latents = res[0][0]
-        all_latents = res[1]
+        inversion_kwargs["latents"] = latents.clone()
+        res = pipe_inversion(**inversion_kwargs)
     
+    latents = res[0][0]
+    all_latents = res[1]
     inv_latent = latents.clone()
 
     if do_reconstruction:
@@ -96,7 +77,7 @@ def run(init_image: Image,
                             negative_prompt = prompt,
                             image = latents,
                             strength = cfg.inversion_max_step,
-                            denoising_start = 1.0-cfg.inversion_max_step,
+                            denoising_start = 1.0 - cfg.inversion_max_step,
                             guidance_scale = guidance_scale).images[0]
     else:
         img = None
