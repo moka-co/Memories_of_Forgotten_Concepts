@@ -101,9 +101,9 @@ def vae_inversion_start_from_encoder_latent(
     #    z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
     #target_mean = z_0_from_encoder.mean.detach()
     #target_var = z_0_from_encoder.var.detach()
-    #target_image_scaled_to_01 = torch.from_numpy(np.array(image) * 1.0 / 255.0).to(
-    #    device
-    #)
+    target_image_scaled_to_01 = torch.from_numpy(np.array(image) * 1.0 / 255.0).to(
+        device
+    )
 
     with torch.inference_mode():
         z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
@@ -130,7 +130,7 @@ def vae_inversion_start_from_encoder_latent(
     pbar = tqdm(range(num_steps))
 
     # Precompute the target image tensor once outside the loop
-    target_tensor = (target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32))
+    target_tensor = (target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16))
 
     for step in pbar:
         optimizer.zero_grad()
@@ -164,9 +164,8 @@ def vae_inversion_start_from_encoder_latent(
                 / torch.mean(
                     (
                         reconstructed_image_rescaled
-                        - target_image_scaled_to_01.permute(2, 0, 1)
-                        .unsqueeze(0)
-                        .type(torch.float32)
+                        - target_tensor
+                        #- target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16)
                     )
                     ** 2
                 )
@@ -277,7 +276,7 @@ def vae_inversion_start_from_arbitrary_latent(
     psnrs = []
 
     target_tensor = (
-        target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32)
+        target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16)
     )
     pbar = tqdm(range(num_steps))
     for step in pbar:
@@ -289,7 +288,7 @@ def vae_inversion_start_from_arbitrary_latent(
         #        torch.float32
         #    )
         reconstructed_image = decoder(z).sample
-        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float32)
+        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float16)
 
         # Compute the loss between the original image and the reconstructed image
         reconstruction_loss_value = reconstruction_loss(
