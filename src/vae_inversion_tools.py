@@ -28,6 +28,9 @@ def get_latent_from_encoder(encoder, img, device=None):
     #match the image data type to the encoder's weight data type
     if hasattr(encoder, "dtype"):
         pp_image = pp_image.to(dtype=encoder.dtype)
+    elif hasattr(encoder, "__self__") and hasattr(encoder.__self__, "dtype"):
+        # Handles case where pipe.vae.encode is a bound method pointing to the underlying module
+        pp_image = pp_image.to(dtype=encoder.__self__.dtype)
     elif hasattr(encoder, "module") and hasattr(encoder.module, "dtype"):
         pp_image = pp_image.to(dtype=encoder.module.dtype)
     
