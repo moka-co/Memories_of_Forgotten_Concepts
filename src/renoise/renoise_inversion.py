@@ -130,7 +130,8 @@ def inversion_step(
                 if pipe.do_classifier_free_guidance:
                     noise_pred_optimal_uncond, noise_pred_optimal_text = noise_pred_optimal.chunk(2)
                     noise_pred_optimal = noise_pred_optimal_uncond + pipe.guidance_scale * (noise_pred_optimal_text - noise_pred_optimal_uncond)
-                noise_pred_optimal = noise_pred_optimal.detach()
+                #noise_pred_optimal = noise_pred_optimal.detach()
+                noise_pred_optimal = noise_pred_optimal.detach().clone()
 
             # perform guidance
             if pipe.do_classifier_free_guidance:
