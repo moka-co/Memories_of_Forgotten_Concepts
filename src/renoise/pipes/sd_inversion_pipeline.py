@@ -109,6 +109,7 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
         # 4. Preprocess image
         if latents is None:
             image = self.image_processor.preprocess(image)
+            image = image.to(dtype=self.vae.dtype)
 
         # 5. set timesteps
         timesteps, num_inversion_steps = retrieve_timesteps(self.scheduler, num_inversion_steps, device, timesteps)
