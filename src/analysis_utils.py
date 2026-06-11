@@ -22,6 +22,8 @@ def clip_similarity(image_path, text, model=None, processor=None):
 
     # Process image and truncated text inputs
     inputs = processor(text=[text], images=image, return_tensors="pt", padding=True, truncation=True)
+    # move all input tensors to the same device as the model
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
     # Compute the embeddings
     with torch.no_grad():
