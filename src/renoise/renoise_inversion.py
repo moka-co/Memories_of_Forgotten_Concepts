@@ -149,11 +149,10 @@ def inversion_step(
             #noise_pred = noise_regularization(noise_pred, noise_pred_optimal, lambda_kl=pipe.cfg.noise_regularization_lambda_kl, lambda_ac=pipe.cfg.noise_regularization_lambda_ac, num_reg_steps=pipe.cfg.noise_regularization_num_reg_steps, num_ac_rolls=pipe.cfg.noise_regularization_num_ac_rolls, generator=generator)
             # Clone the tensors out of the CUDA Graph static memory buffers before mutating them
             noise_pred_cloned = noise_pred.clone()
-            noise_pred_optimal_cloned = noise_pred_optimal.clone() if hasattr(noise_pred_optimal, 'clone') else noise_pred_optimal
-
+            
             noise_pred = noise_regularization(
                 noise_pred_cloned, 
-                noise_pred_optimal_cloned, 
+                noise_pred_optimal, 
                 lambda_kl=pipe.cfg.noise_regularization_lambda_kl, 
                 lambda_ac=pipe.cfg.noise_regularization_lambda_ac, 
                 num_reg_steps=pipe.cfg.noise_regularization_num_reg_steps, 
