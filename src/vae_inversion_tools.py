@@ -254,7 +254,8 @@ def vae_inversion_start_from_arbitrary_latent(
     )
     os.makedirs(out_dir, exist_ok=True)
     # validate that the preprocessing went well:
-    with torch.no_grad():
+    #with torch.no_grad():
+    with torch.inference_mode():
         result = decoder(encoder(pp_image.to(device)).latent_dist.mean).sample
     result_rescaled = (result / 2 + 0.5).clamp(0, 1)
     image_to_show = result_rescaled.detach().cpu().permute(0, 2, 3, 1).float().numpy()
@@ -275,6 +276,9 @@ def vae_inversion_start_from_arbitrary_latent(
     losses = []
     psnrs = []
 
+    target_tensor = (
+        target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32)
+    )
     pbar = tqdm(range(num_steps))
     for step in pbar:
         optimizer.zero_grad()
@@ -285,12 +289,13 @@ def vae_inversion_start_from_arbitrary_latent(
         #        torch.float32
         #    )
         reconstructed_image = decoder(z).sample
-        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(torch.float32)
+        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float32)
 
         # Compute the loss between the original image and the reconstructed image
         reconstruction_loss_value = reconstruction_loss(
             reconstructed_image_rescaled,
-            target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32),
+            #target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32),
+            target_tensor
         )
         loss = scale_reconstruction * reconstruction_loss_value
 
@@ -305,9 +310,8 @@ def vae_inversion_start_from_arbitrary_latent(
                 / torch.mean(
                     (
                         reconstructed_image_rescaled
-                        - target_image_scaled_to_01.permute(2, 0, 1)
-                        .unsqueeze(0)
-                        .type(torch.float32)
+                        - target_tensor 
+                        #- target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float32)
                     )
                     ** 2
                 )
