@@ -625,6 +625,7 @@ if __name__ == "__main__":
 
     # Optimization
     pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
+    #pipe.unet = torch.compile(pipe.unet)
     try:
         pipe.enable_xformers_memory_efficient_attention()
     except:
