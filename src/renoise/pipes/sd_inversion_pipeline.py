@@ -116,6 +116,9 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
         timesteps, num_inversion_steps = self.get_timesteps(num_inversion_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
 
+        # force the VAE to float16
+        self.vae = self.vae.to(device=device, dtype=torch.float16)
+        
         # 6. Prepare latent variables
         with torch.no_grad():
             if latents is None:
