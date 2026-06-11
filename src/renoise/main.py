@@ -6,11 +6,16 @@ from diffusers.utils.torch_utils import randn_tensor
 from src.renoise.config import RunConfig
 from src.renoise.utils.enums_utils import model_type_to_size, is_stochastic
 
-def create_noise_list(model_type, length, generator=None):
+def create_noise_list(model_type, length, device=None, generator=None):
     img_size = model_type_to_size(model_type)
     VQAE_SCALE = 8
     latents_size = (1, 4, img_size[0] // VQAE_SCALE, img_size[1] // VQAE_SCALE)
-    return [randn_tensor(latents_size, dtype=torch.float16, device=torch.device("cuda:0"), generator=generator) for i in range(length)]
+    #return [randn_tensor(latents_size, dtype=torch.float16, device=torch.device("cuda:0"), generator=generator) for i in range(length)]
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return [
+        randn_tensor(latents_size, dtype=torch.float16, device=device, generator=generator) for _ in range(length)
+    ]
 
 @pyrallis.wrap()
 def main(cfg: RunConfig):
@@ -28,10 +33,11 @@ def run(init_image: Image,
         do_reconstruction = True):
     
     generator = torch.Generator().manual_seed(cfg.seed)
+    device = getattr(pipe_inversion, "device", torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     if is_stochastic(cfg.scheduler_type):
         if latents is None:
-            noise = create_noise_list(cfg.model_type, cfg.num_inversion_steps, generator=generator)
+            noise = create_noise_list(cfg.model_type, cfg.num_inversion_steps, device=device, generator=generator)
         pipe_inversion.scheduler.set_noise_list(noise)
         pipe_inference.scheduler.set_noise_list(noise)
 
@@ -39,8 +45,21 @@ def run(init_image: Image,
     pipe_inference.cfg = cfg
     all_latents = None
 
+    print("Inverting...")
+    inversion_kwargs = {
+        "prompt": prompt,
+        "num_inversion_steps": cfg.num_inversion_steps,
+        "num_inference_steps": cfg.num_inference_steps,
+        "generator": generator,
+        "image": init_image,
+        "guidance_scale": cfg.guidance_scale,
+        "strength": cfg.inversion_max_step,
+        "denoising_start": 1.0 - cfg.inversion_max_step,
+        "num_renoise_steps": cfg.num_renoise_steps,
+    }
+
     if latents is None:
-        print("Inverting...")
+        
         res = pipe_inversion(prompt = prompt,
                         num_inversion_steps = cfg.num_inversion_steps,
                         num_inference_steps = cfg.num_inference_steps,
@@ -53,7 +72,6 @@ def run(init_image: Image,
         latents = res[0][0]
         all_latents = res[1]
     else:
-        print("Inverting...")
         res = pipe_inversion(prompt = prompt,
                         num_inversion_steps = cfg.num_inversion_steps,
                         num_inference_steps = cfg.num_inference_steps,
