@@ -3,17 +3,20 @@ from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 
 
-def clip_similarity(image_path, text):
+def clip_similarity(image_path, text, model=None, processor=None):
     """Compute the similarity between an image and a text using CLIP model.
 
     Args:
         image_path (str): Path to the image file.
         text (str): Text to compare with the image.
+        model and processor
     Returns:
         float: Similarity score between the image and the text
     """
-    model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+    if model is None or processor is None:
+        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
     # Open the image
     image = Image.open(image_path).convert("RGB")
 
