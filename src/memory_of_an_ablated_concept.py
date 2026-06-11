@@ -619,6 +619,7 @@ if __name__ == "__main__":
         pipe.text_encoder = CLIPTextModel.from_pretrained(
             args.ablated_text_encoder,
             subfolder=f"{args.ablated_concept_name}_unlearned",
+            torch_dtype=torch.float16
         )
     
     pipe = pipe.to(device)
@@ -626,11 +627,10 @@ if __name__ == "__main__":
     # Optimization
     pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
     #pipe.unet = torch.compile(pipe.unet)
-    try:
-        pipe.enable_xformers_memory_efficient_attention()
-    except:
-        print("Warning (safe to ignore): cannot enable xformers memory efficient attention\n")
-        pass
+    
+    #PyTorch 2.3+ natively uses optimized Scaled Dot Product Attention (SDPA)
+    if hasattr(pipe, "enable_vae_slicing"):
+        pipe.enable_vae_slicing()
 
 
     ref_img_indices = []
