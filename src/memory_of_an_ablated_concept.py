@@ -607,7 +607,8 @@ if __name__ == "__main__":
     all_control_group_psnrs = []
 
     pipe = StableDiffusionPipeline.from_pretrained(
-        model_id, safety_checker=None, scheduler=scheduler
+        model_id, safety_checker=None, scheduler=scheduler,
+        torch_dtype=torch.float16
     )
 
     if args.ablated_model:
@@ -619,7 +620,18 @@ if __name__ == "__main__":
             args.ablated_text_encoder,
             subfolder=f"{args.ablated_concept_name}_unlearned",
         )
+    
     pipe = pipe.to(device)
+
+    # Optimization
+    pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
+    try:
+        pipe.enable_xformers_memory_efficient_attention()
+    except:
+        print("Warning (safe to ignore): cannot enable xformers memory efficient attention\n")
+        pass
+
+
     ref_img_indices = []
     ref_imgs_list = []
     target_imgs_list = []
