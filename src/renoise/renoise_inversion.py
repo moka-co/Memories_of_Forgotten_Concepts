@@ -7,7 +7,8 @@ def noise_regularization(
 ):
     for _outer in range(num_reg_steps):
         if lambda_kl > 0:
-            _var = torch.autograd.Variable(e_t.detach().clone(), requires_grad=True)
+            #_var = torch.autograd.Variable(e_t.detach().clone(), requires_grad=True) Outdated API
+            _var = e_t.detach().clone().requires_grad_(True)
             l_kld = patchify_latents_kl_divergence(_var, noise_pred_optimal)
             l_kld.backward()
             _grad = _var.grad.detach()
@@ -15,7 +16,8 @@ def noise_regularization(
             e_t = e_t - lambda_kl * _grad
         if lambda_ac > 0:
             for _inner in range(num_ac_rolls):
-                _var = torch.autograd.Variable(e_t.detach().clone(), requires_grad=True)
+                #_var = torch.autograd.Variable(e_t.detach().clone(), requires_grad=True)
+                _var = e_t.detach().clone().requires_grad_(True)
                 l_ac = auto_corr_loss(_var, generator=generator)
                 l_ac.backward()
                 _grad = _var.grad.detach() / num_ac_rolls
@@ -25,14 +27,18 @@ def noise_regularization(
     return e_t
 
 # Based on code from https://github.com/pix2pixzero/pix2pix-zero
+# Note: edit to improve performance
 def auto_corr_loss(
         x, random_shift=True, generator=None
 ):
     B, C, H, W = x.shape
     assert B == 1
-    x = x.squeeze(0)
+    #x = x.squeeze(0)
     # x must be shape [C,H,W] now
+
+    noise = x # Shape: [1, C, H, W]
     reg_loss = 0.0
+    '''
     for ch_idx in range(x.shape[0]):
         noise = x[ch_idx][None, None, :, :]
         while True:
@@ -49,6 +55,22 @@ def auto_corr_loss(
             if noise.shape[2] <= 8:
                 break
             noise = F.avg_pool2d(noise, kernel_size=2)
+    '''
+
+    while True:
+        h_dim, w_dim = noise.shape[2], noise.shape[3]
+        if random_shift:
+            roll_amount = torch.randint(0, h_dim // 2, (1,), generator=generator).item()
+        else:
+            roll_amount = 1
+            
+        reg_loss += (noise * torch.roll(noise, shifts=roll_amount, dims=2)).mean(dim=(2, 3)).pow(2).sum()
+        reg_loss += (noise * torch.roll(noise, shifts=roll_amount, dims=3)).mean(dim=(2, 3)).pow(2).sum()
+        
+        if h_dim <= 8:
+            break
+        noise = F.avg_pool2d(noise, kernel_size=2)
+    
     return reg_loss
 
 
@@ -97,10 +119,14 @@ def inversion_step(
     generator=None,
 ) -> torch.tensor:
     extra_step_kwargs = {}
-    avg_range = pipe.cfg.average_first_step_range if t.item() < first_step_max_timestep else pipe.cfg.average_step_range
-    num_renoise_steps = min(pipe.cfg.max_num_renoise_steps_first_step, num_renoise_steps) if t.item() < first_step_max_timestep else num_renoise_steps
+    #avg_range = pipe.cfg.average_first_step_range if t.item() < first_step_max_timestep else pipe.cfg.average_step_range
+    #num_renoise_steps = min(pipe.cfg.max_num_renoise_steps_first_step, num_renoise_steps) if t.item() < first_step_max_timestep else num_renoise_steps
 
-    nosie_pred_avg = None
+    is_first_step = t.item() < first_step_max_timestep
+    avg_range = pipe.cfg.average_first_step_range if is_first_step else pipe.cfg.average_step_range
+    num_renoise_steps = min(pipe.cfg.max_num_renoise_steps_first_step, num_renoise_steps) if is_first_step else num_renoise_steps
+
+    noise_pred_avg = None
     noise_pred_optimal = None
     z_tp1_forward = pipe.scheduler.add_noise(pipe.z_0, pipe.noise, t.view((1))).detach()
 
@@ -113,9 +139,13 @@ def inversion_step(
                 approximated_z_tp1 = torch.cat([z_tp1_forward, approximated_z_tp1])
                 prompt_embeds_in = torch.cat([prompt_embeds, prompt_embeds])
                 if added_cond_kwargs is not None:
-                    added_cond_kwargs_in = {}
-                    added_cond_kwargs_in['text_embeds'] = torch.cat([added_cond_kwargs['text_embeds'], added_cond_kwargs['text_embeds']])
-                    added_cond_kwargs_in['time_ids'] = torch.cat([added_cond_kwargs['time_ids'], added_cond_kwargs['time_ids']])
+                    #added_cond_kwargs_in = {}
+                    #added_cond_kwargs_in['text_embeds'] = torch.cat([added_cond_kwargs['text_embeds'], added_cond_kwargs['text_embeds']])
+                    #added_cond_kwargs_in['time_ids'] = torch.cat([added_cond_kwargs['time_ids'], added_cond_kwargs['time_ids']])
+                    added_cond_kwargs_in = {
+                        'text_embeds': torch.cat([added_cond_kwargs['text_embeds'], added_cond_kwargs['text_embeds']]),
+                        'time_ids': torch.cat([added_cond_kwargs['time_ids'], added_cond_kwargs['time_ids']])
+                    }
                 else:
                     added_cond_kwargs_in = None
             else:
@@ -139,12 +169,16 @@ def inversion_step(
                 noise_pred = noise_pred_uncond + pipe.guidance_scale * (noise_pred_text - noise_pred_uncond)
 
             # Calculate average noise
-            if  i >= avg_range[0] and i < avg_range[1]:
+            #if  i >= avg_range[0] and i < avg_range[1]:
+            if avg_range[0] <= i < avg_range[1]:
                 j = i - avg_range[0]
-                if nosie_pred_avg is None:
-                    nosie_pred_avg = noise_pred.clone()
+                #if noise_pred_avg is None:
+                #    noise_pred_avg = noise_pred.clone()
+                if noise_pred_avg is None:
+                    noise_pred_avg = noise_pred.clone()
                 else:
-                    nosie_pred_avg = j * nosie_pred_avg / (j + 1) + noise_pred / (j + 1)
+                    #noise_pred_avg = j * noise_pred_avg / (j + 1) + noise_pred / (j + 1)
+                    noise_pred_avg.mul_(j / (j + 1)).add_(noise_pred / (j + 1))
 
         if i >= avg_range[0] or (not pipe.cfg.average_latent_estimations and i > 0):
             #noise_pred = noise_regularization(noise_pred, noise_pred_optimal, lambda_kl=pipe.cfg.noise_regularization_lambda_kl, lambda_ac=pipe.cfg.noise_regularization_lambda_ac, num_reg_steps=pipe.cfg.noise_regularization_num_reg_steps, num_ac_rolls=pipe.cfg.noise_regularization_num_ac_rolls, generator=generator)
@@ -164,9 +198,9 @@ def inversion_step(
         approximated_z_tp1 = pipe.scheduler.inv_step(noise_pred, t, z_t, **extra_step_kwargs, return_dict=False)[0].detach()
 
     # if average latents is enabled, we need to perform an additional step with the average noise
-    if pipe.cfg.average_latent_estimations and nosie_pred_avg is not None:
-        nosie_pred_avg = noise_regularization(nosie_pred_avg, noise_pred_optimal, lambda_kl=pipe.cfg.noise_regularization_lambda_kl, lambda_ac=pipe.cfg.noise_regularization_lambda_ac, num_reg_steps=pipe.cfg.noise_regularization_num_reg_steps, num_ac_rolls=pipe.cfg.noise_regularization_num_ac_rolls, generator=generator)
-        approximated_z_tp1 = pipe.scheduler.inv_step(nosie_pred_avg, t, z_t, **extra_step_kwargs, return_dict=False)[0].detach()
+    if pipe.cfg.average_latent_estimations and noise_pred_avg is not None:
+        noise_pred_avg = noise_regularization(noise_pred_avg, noise_pred_optimal, lambda_kl=pipe.cfg.noise_regularization_lambda_kl, lambda_ac=pipe.cfg.noise_regularization_lambda_ac, num_reg_steps=pipe.cfg.noise_regularization_num_reg_steps, num_ac_rolls=pipe.cfg.noise_regularization_num_ac_rolls, generator=generator)
+        approximated_z_tp1 = pipe.scheduler.inv_step(noise_pred_avg, t, z_t, **extra_step_kwargs, return_dict=False)[0].detach()
 
     # perform noise correction
     if pipe.cfg.perform_noise_correction:
