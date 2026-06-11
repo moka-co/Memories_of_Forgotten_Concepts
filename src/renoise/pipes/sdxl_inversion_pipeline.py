@@ -1,5 +1,6 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from diffusers.utils import deprecate
 from diffusers import StableDiffusionXLImg2ImgPipeline
 from diffusers.utils.torch_utils import randn_tensor
 
@@ -126,6 +127,11 @@ class SDXLDDIMPipeline(StableDiffusionXLImg2ImgPipeline):
             clip_skip=self.clip_skip,
         )
 
+        # Preserve original un-concatenated shapes to avoid KeyError loop crashes below
+        _raw_negative_prompt_embeds = negative_prompt_embeds
+        _raw_negative_pooled_prompt_embeds = negative_pooled_prompt_embeds
+        _raw_add_neg_time_ids = None
+
         # 4. Preprocess image
         image = self.image_processor.preprocess(image)
 
@@ -139,7 +145,8 @@ class SDXLDDIMPipeline(StableDiffusionXLImg2ImgPipeline):
             num_inversion_steps,
             strength,
             device,
-            denoising_start=self.denoising_start if denoising_value_valid else None,
+            #denoising_start=self.denoising_start if denoising_value_valid else None,
+            denoising_start=self.denoising_start if denoising_value_valid(self.denoising_start) else None,
         )
 
         # 6. Prepare latent variables
@@ -194,6 +201,7 @@ class SDXLDDIMPipeline(StableDiffusionXLImg2ImgPipeline):
             prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds], dim=0)
             add_text_embeds = torch.cat([negative_pooled_prompt_embeds, add_text_embeds], dim=0)
             add_neg_time_ids = add_neg_time_ids.repeat(batch_size * num_images_per_prompt, 1)
+            _raw_add_neg_time_ids = add_neg_time_ids
             add_time_ids = torch.cat([add_neg_time_ids, add_time_ids], dim=0)
 
         prompt_embeds = prompt_embeds.to(device)
@@ -233,19 +241,30 @@ class SDXLDDIMPipeline(StableDiffusionXLImg2ImgPipeline):
 
                 if callback_on_step_end is not None:
                     callback_kwargs = {}
+                    local_vars = locals()
+                    # Map expected variables safely to avoid execution loop faults
+                    local_vars["negative_prompt_embeds"] = _raw_negative_prompt_embeds
+                    local_vars["negative_pooled_prompt_embeds"] = _raw_negative_pooled_prompt_embeds
+                    local_vars["add_neg_time_ids"] = _raw_add_neg_time_ids
+
                     for k in callback_on_step_end_tensor_inputs:
-                        callback_kwargs[k] = locals()[k]
+                        #callback_kwargs[k] = locals()[k]
+                        if k in local_vars:
+                            callback_kwargs[k] = local_vars[k]
                     callback_outputs = callback_on_step_end(self, i, t, callback_kwargs)
 
                     latents = callback_outputs.pop("latents", latents)
                     prompt_embeds = callback_outputs.pop("prompt_embeds", prompt_embeds)
-                    negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", negative_prompt_embeds)
+                    #negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", negative_prompt_embeds)
+                    _raw_negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", _raw_negative_prompt_embeds)
                     add_text_embeds = callback_outputs.pop("add_text_embeds", add_text_embeds)
-                    negative_pooled_prompt_embeds = callback_outputs.pop(
-                        "negative_pooled_prompt_embeds", negative_pooled_prompt_embeds
-                    )
+                    #negative_pooled_prompt_embeds = callback_outputs.pop(
+                    #    "negative_pooled_prompt_embeds", negative_pooled_prompt_embeds
+                    #)
+                    _raw_negative_pooled_prompt_embeds = callback_outputs.pop("negative_pooled_prompt_embeds", _raw_negative_pooled_prompt_embeds)
                     add_time_ids = callback_outputs.pop("add_time_ids", add_time_ids)
-                    add_neg_time_ids = callback_outputs.pop("add_neg_time_ids", add_neg_time_ids)
+                    #add_neg_time_ids = callback_outputs.pop("add_neg_time_ids", add_neg_time_ids)
+                    _raw_add_neg_time_ids = callback_outputs.pop("add_neg_time_ids", _raw_add_neg_time_ids)
 
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):

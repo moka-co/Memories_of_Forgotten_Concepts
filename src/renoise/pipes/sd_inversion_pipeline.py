@@ -1,5 +1,6 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from diffusers.utils import deprecate
 from diffusers import StableDiffusionImg2ImgPipeline
 from diffusers.utils.torch_utils import randn_tensor
 
@@ -95,6 +96,10 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
             lora_scale=text_encoder_lora_scale,
             clip_skip=self.clip_skip,
         )
+
+        # Save original reference to avoid KeyError crashes in local scope loops below
+        _raw_negative_prompt_embeds = negative_prompt_embeds
+
         # For classifier free guidance, we need to do two forward passes.
         # Here we concatenate the unconditional and text embeddings into a single batch
         # to avoid doing two forward passes
@@ -169,13 +174,18 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
 
                 if callback_on_step_end is not None:
                     callback_kwargs = {}
+                    local_vars = locals()
+                    local_vars["negative_prompt_embeds"] = _raw_negative_prompt_embeds
                     for k in callback_on_step_end_tensor_inputs:
-                        callback_kwargs[k] = locals()[k]
+                        #callback_kwargs[k] = locals()[k]
+                        if k in local_vars:
+                            callback_kwargs[k] = local_vars[k]
                     callback_outputs = callback_on_step_end(self, i, t, callback_kwargs)
 
                     latents = callback_outputs.pop("latents", latents)
                     prompt_embeds = callback_outputs.pop("prompt_embeds", prompt_embeds)
-                    negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", negative_prompt_embeds)
+                    #negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", negative_prompt_embeds)
+                    _raw_negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", _raw_negative_prompt_embeds)
 
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
