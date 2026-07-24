@@ -385,13 +385,13 @@ def start_from_latents_from_other_imgs_diffusion_inversion(
         elif inversion_method == "renoise":
             reconstruction = pipe.vae.decode(z_0).sample.cpu().detach()
 
+            # Save a PIL copy for saving to disk
             pp_image = pipe.image_processor.postprocess(reconstruction)
             pp_image[0].save(f"{out_dir_invert_from_z0_to_zT}/input.png")
 
-            if isinstance(pp_image, list):
-                pp_image = [img.to(dtype=pipe_inversion.vae.dtype) if hasattr(img, 'to') else img for img in pp_image]
-            else:
-                pp_image = pp_image.to(dtype=pipe_inversion.vae.dtype)
+            # Prepare the tensor directly for renoise_invert (ensuring correct dtype & range)
+            # Standard SD pipelines expect input tensors scaled in [-1, 1] range or normalized
+            pp_image = reconstruction.to(device=pipe_inversion.device, dtype=pipe_inversion.vae.dtype
 
             img, z_T, _, _ = renoise_invert(
                 init_image=pp_image,
