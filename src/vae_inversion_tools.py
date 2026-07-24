@@ -294,7 +294,7 @@ def vae_inversion_start_from_arbitrary_latent(
     psnrs = []
 
     target_tensor = (
-        target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16)
+        target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).float()
     )
     pbar = tqdm(range(num_steps))
     for step in pbar:
