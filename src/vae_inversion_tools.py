@@ -144,7 +144,8 @@ def vae_inversion_start_from_encoder_latent(
     pbar = tqdm(range(num_steps))
 
     # Precompute the target image tensor once outside the loop
-    target_tensor = (target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16))
+    #target_tensor = (target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).type(torch.float16))
+    target_tensor = (target_image_scaled_to_01.permute(2, 0, 1).unsqueeze(0).float())
 
     for step in pbar:
         optimizer.zero_grad()
@@ -305,7 +306,8 @@ def vae_inversion_start_from_arbitrary_latent(
         #        torch.float32
         #    )
         reconstructed_image = decoder(z.to(decoder_dtype)).sample
-        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float16)
+        #reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float16)
+        reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).float()
 
         # Compute the loss between the original image and the reconstructed image
         reconstruction_loss_value = reconstruction_loss(
