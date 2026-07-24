@@ -564,7 +564,7 @@ def write_results_into_json(results_target, results_control_group):
         "std_control_group_nlls": np.std(results_control_group["nll_values"]),
     }
 
-    detection_json = results_target["success_rate"]
+    detection_json = results_target["success_rate"]["post_analysis_success_rate"]
     emd_json = results_target["emd_scores"]
 
     clip_json = {

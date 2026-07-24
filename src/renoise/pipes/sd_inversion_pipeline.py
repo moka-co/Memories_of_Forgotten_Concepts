@@ -122,7 +122,7 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
 
         # force the VAE to float16
-        #self.vae = self.vae.to(device=device, dtype=torch.float16)
+        self.vae = self.vae.to(device=device, dtype=torch.float16)
         
         # 6. Prepare latent variables
         with torch.no_grad():
