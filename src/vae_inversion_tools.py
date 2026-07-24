@@ -117,7 +117,7 @@ def vae_inversion_start_from_encoder_latent(
         device
     )
 
-    with torch.inference_mode():
+    with torch.no_grad():
         z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
         target_mean = z_0_from_encoder.mean.detach().clone()
         target_var  = z_0_from_encoder.var.detach().clone()
@@ -266,7 +266,7 @@ def vae_inversion_start_from_arbitrary_latent(
     os.makedirs(out_dir, exist_ok=True)
     # validate that the preprocessing went well:
     #with torch.no_grad():
-    with torch.inference_mode():
+    with torch.no_grad():
         result = decoder(encoder(pp_image.to(device)).latent_dist.mean).sample
     result_rescaled = (result / 2 + 0.5).clamp(0, 1)
     image_to_show = result_rescaled.detach().cpu().permute(0, 2, 3, 1).float().numpy()
