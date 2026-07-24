@@ -117,11 +117,13 @@ def vae_inversion_start_from_encoder_latent(
         device
     )
 
+    decoder_dtype = pp_image.dtype  # dtype the decoder/pipeline actually runs in (e.g. float16)
+
     with torch.no_grad():
         z_0_from_encoder = encoder(pp_image.to(device)).latent_dist
-        target_mean = z_0_from_encoder.mean.detach().clone()
-        target_var  = z_0_from_encoder.var.detach().clone()
-        val_result  = decoder(target_mean).sample
+        target_mean = z_0_from_encoder.mean.detach().clone().float()
+        target_var  = z_0_from_encoder.var.detach().clone().float()
+        val_result  = decoder(z_0_from_encoder.mean).sample
     result_rescaled = (val_result / 2 + 0.5).clamp(0, 1)
     image_to_show = result_rescaled.cpu().permute(0, 2, 3, 1).float().numpy()
     Image.fromarray((image_to_show[0] * 255).astype(np.uint8)).save(
@@ -130,7 +132,7 @@ def vae_inversion_start_from_encoder_latent(
 
     reconstruction_loss = nn.MSELoss()
 
-    z = torch.zeros([1, 4, 64, 64], requires_grad=True, device=device)
+    z = torch.zeros([1, 4, 64, 64], requires_grad=True, device=device, dtype=torch.float32)
     z.data = target_mean
 
     optimizer = optim.Adam([z], lr=1e-2)
@@ -148,7 +150,7 @@ def vae_inversion_start_from_encoder_latent(
         optimizer.zero_grad()
 
         # Decode the latent variable to get the reconstructed image
-        reconstructed_image = decoder(z).sample
+        reconstructed_image = decoder(z.to(decoder_dtype)).sample
         reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
             torch.float32
         )
@@ -266,6 +268,9 @@ def vae_inversion_start_from_arbitrary_latent(
     os.makedirs(out_dir, exist_ok=True)
     # validate that the preprocessing went well:
     #with torch.no_grad():
+
+    decoder_dtype = pp_image.dtype  # dtype the decoder/pipeline actually runs in (e.g. float16)
+
     with torch.no_grad():
         result = decoder(encoder(pp_image.to(device)).latent_dist.mean).sample
     result_rescaled = (result / 2 + 0.5).clamp(0, 1)
@@ -279,9 +284,9 @@ def vae_inversion_start_from_arbitrary_latent(
     )
     reconstruction_loss = nn.MSELoss()
 
-    z = torch.zeros([1, 4, 64, 64], requires_grad=True, device=device)
-    z.data = latent_init.to(device)
-    latent_init = latent_init.to(device)
+    z = torch.zeros([1, 4, 64, 64], requires_grad=True, device=device, dtype=torch.float32)
+    z.data = latent_init.to(device).float()
+    latent_init = latent_init.to(device).float()
 
     optimizer = optim.Adam([z], lr=1e-2)
     losses = []
@@ -299,7 +304,7 @@ def vae_inversion_start_from_arbitrary_latent(
         #    reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).type(
         #        torch.float32
         #    )
-        reconstructed_image = decoder(z).sample
+        reconstructed_image = decoder(z.to(decoder_dtype)).sample
         reconstructed_image_rescaled = (reconstructed_image / 2 + 0.5).typresult = decoder(encoder(pp_image.to(device)).latent_dist.mean).samplee(torch.float16)
 
         # Compute the loss between the original image and the reconstructed image
