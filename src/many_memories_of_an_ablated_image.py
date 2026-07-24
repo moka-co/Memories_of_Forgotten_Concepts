@@ -388,6 +388,8 @@ def start_from_latents_from_other_imgs_diffusion_inversion(
             pp_image = pipe.image_processor.postprocess(reconstruction)
             pp_image[0].save(f"{out_dir_invert_from_z0_to_zT}/input.png")
 
+            image = image.to(dtype=pipe_inversion.vae.dtype)
+
             img, z_T, _, _ = renoise_invert(
                 init_image=pp_image,
                 prompt=constant_prompt,
