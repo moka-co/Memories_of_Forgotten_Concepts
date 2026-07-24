@@ -111,6 +111,9 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
             if self.do_classifier_free_guidance:
                 image_embeds = torch.cat([negative_image_embeds, image_embeds])
 
+        # force the VAE to float16
+        self.vae = self.vae.to(device=device, dtype=torch.float16)
+
         # 4. Preprocess image
         if latents is None:
             image = self.image_processor.preprocess(image)
@@ -121,8 +124,7 @@ class SDDDIMPipeline(StableDiffusionImg2ImgPipeline):
         timesteps, num_inversion_steps = self.get_timesteps(num_inversion_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
 
-        # force the VAE to float16
-        self.vae = self.vae.to(device=device, dtype=torch.float16)
+
         
         # 6. Prepare latent variables
         with torch.no_grad():
