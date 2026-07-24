@@ -364,6 +364,8 @@ def start_from_latents_from_other_imgs_diffusion_inversion(
             perform_noise_correction=False,
             seed=42,
         )
+        pipe_inversion.vae = pipe_inversion.vae.float()
+        pipe_inference.vae = pipe_inference.vae.float()
 
     for image_idx, image_name in enumerate(ref_img_indices):
         z_0 = torch.load(image_index_to_latent[image_name])
