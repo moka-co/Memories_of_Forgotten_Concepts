@@ -391,7 +391,7 @@ def start_from_latents_from_other_imgs_diffusion_inversion(
 
             # Prepare the tensor directly for renoise_invert (ensuring correct dtype & range)
             # Standard SD pipelines expect input tensors scaled in [-1, 1] range or normalized
-            pp_image = reconstruction.to(device=pipe_inversion.device, dtype=pipe_inversion.vae.dtype)
+            pipe_inversion.vae = pipe_inversion.vae.to(dtype=torch.float32)
 
             img, z_T, _, _ = renoise_invert(
                 init_image=pp_image,
